@@ -1,12 +1,12 @@
+package manager;
+
+import common.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class TaskManager {
-    public static final String newStatus = "NEW";
-    public static final String inProgressStatus = "IN_PROGRESS";
-    public static final String doneStatus = "DONE";
-
     private final HashMap<Integer, Task> taskMap = new HashMap<>();
     private final HashMap<Integer, SubTask> subTaskMap = new HashMap<>();
     private final HashMap<Integer, Epic> epicMap = new HashMap<>();
@@ -49,7 +49,7 @@ public class TaskManager {
         subTaskMap.clear();
         for (Integer epicKey : epicMap.keySet()) {
             epicMap.get(epicKey).getSubTaskIds().clear();
-            epicMap.get(epicKey).setStatus(newStatus);
+            epicMap.get(epicKey).setStatus(Status.NEW);
         }
     }
 
@@ -67,7 +67,7 @@ public class TaskManager {
 
     public int createTask(Task task) {
         int taskId = nextId++;
-        if (task.getStatus().equals(newStatus)) {
+        if (task.getStatus().equals(Status.NEW)) {
             task.setId(taskId);
             taskMap.put(taskId, task);
         }
@@ -84,7 +84,7 @@ public class TaskManager {
 
     public int createSubTask(Epic epic, SubTask subTask) {
         int subTaskId = nextId++;
-        if (subTask.getStatus().equals(newStatus)) {
+        if (subTask.getStatus().equals(Status.NEW)) {
             subTask.setId(subTaskId);
             subTaskMap.put(subTaskId, subTask);
             epic.getSubTaskIds().add(subTaskId);
@@ -147,18 +147,18 @@ public class TaskManager {
 
         List<Integer> subTaskKeys = epicMap.get(id).getSubTaskIds();
         for (Integer subTaskKey : subTaskKeys) {
-            if (subTaskMap.get(subTaskKey).getStatus().equals(newStatus)) {
+            if (subTaskMap.get(subTaskKey).getStatus().equals(Status.NEW)) {
                 counterStatusNew++;
-            } else if (subTaskMap.get(subTaskKey).getStatus().equals(doneStatus)) {
+            } else if (subTaskMap.get(subTaskKey).getStatus().equals(Status.DONE)) {
                 counterStatusDone++;
             }
         }
         if (counterStatusNew == numberOfSubTask) {
-            epicMap.get(id).setStatus(newStatus);
+            epicMap.get(id).setStatus(Status.NEW);
         } else if (counterStatusDone == numberOfSubTask) {
-            epicMap.get(id).setStatus(doneStatus);
+            epicMap.get(id).setStatus(Status.DONE);
         } else {
-            epicMap.get(id).setStatus(inProgressStatus);
+            epicMap.get(id).setStatus(Status.IN_PROGRESS);
         }
     }
 }

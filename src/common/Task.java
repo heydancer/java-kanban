@@ -1,10 +1,12 @@
-public class Task {
-    private int id;
-    private String name;
-    private String description;
-    private String status;
+package common;
 
-    public Task(String name, String description, String status) {
+public class Task {
+    protected int id;
+    protected String name;
+    protected String description;
+    protected Status status;
+
+    public Task(String name, String description, Status status) {
         this.name = name;
         this.description = description;
         this.status = status;
@@ -34,20 +36,20 @@ public class Task {
         this.description = description;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
     @Override
     public String toString() {
-        return getClass().getName() + " {" +
+        return "Task{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
+                ", description ='" + description + '\'' +
                 ", status='" + status + '\'' +
                 '}';
     }
