@@ -1,13 +1,20 @@
 import common.*;
+import manager.InMemoryTaskManager;
+import manager.Managers;
 import manager.TaskManager;
 
 public class Main {
 
     public static void main(String[] args) {
-        TaskManager taskManager = new TaskManager();
+
+        TaskManager taskManager = Managers.getDefault();
 
         Task task1 = new Task("Java", "Сделать домашнее задание", Status.NEW);
         Task task2 = new Task("Английский", "Поехать на занятие", Status.NEW);
+        Task task3 = new Task("Немецкий", "Поехать на занятие", Status.NEW);
+        Task task4 = new Task("Китайский", "Поехать на занятие", Status.NEW);
+        Task task5 = new Task("Французский", "Поехать на занятие", Status.NEW);
+        Task task6 = new Task("Японский", "Поехать на занятие", Status.NEW);
 
         Epic epic1 = new Epic("Переезд", "Покупка новой квартиры");
         SubTask subTask1 = new SubTask("Собрать вещи", "Сложить все вещи по коробкам", Status.NEW);
@@ -16,7 +23,7 @@ public class Main {
         Epic epic2 = new Epic("Магазин", "Поход в магазин");
         SubTask subTask3 = new SubTask("Купить крупу", "Найти рис", Status.NEW);
 
-        //Создайте 2 задачи, один эпик с 2 подзадачами, а другой эпик с 1 подзадачей.
+        //Создаем задачи
         taskManager.createTask(task1);
         taskManager.createTask(task2);
 
@@ -27,35 +34,40 @@ public class Main {
         taskManager.createEpic(epic2);
         taskManager.createSubTask(epic2, subTask3);
 
-        //Распечатайте списки эпиков, задач и подзадач, через System.out.println(..)
+        taskManager.createTask(task3);
+        taskManager.createTask(task4);
+        taskManager.createTask(task5);
+        taskManager.createTask(task6);
+
+        //Смотрим список всех созданных задач
         System.out.println(taskManager.getTaskList());
         System.out.println(taskManager.getEpicList());
         System.out.println(taskManager.getSubTaskList() + "\n");
 
-        /*Измените статусы созданных объектов, распечатайте.
-         Проверьте, что статус задачи и подзадачи сохранился,
-         а статус эпика рассчитался по статусам подзадач.*/
-        task1.setStatus(Status.IN_PROGRESS);
-        task2.setStatus(Status.DONE);
-        taskManager.updateTask(task1);
-        taskManager.updateTask(task2);
-
-        subTask1.setStatus(Status.IN_PROGRESS);
+        //Поменяем статус СабТаски и посомтрим изменения в истории
+        subTask1.setStatus(Status.DONE);
         taskManager.updateSubTask(subTask1);
 
-        subTask3.setStatus(Status.DONE);
-        taskManager.updateSubTask(subTask3);
+        //Обращаемся ко всем задачам
+        taskManager.getTask(1);
+        taskManager.getTask(2);
 
-        System.out.println(taskManager.getTaskList());
-        System.out.println(taskManager.getEpicList());
-        System.out.println(taskManager.getSubTaskList() + "\n");
+        taskManager.getEpic(3);
 
-        //И, наконец, попробуйте удалить одну из задач и один из эпиков.
-        taskManager.removeTask(task1.getId());
-        taskManager.removeEpic(epic1.getId());
+        taskManager.getSubTask(4);
+        taskManager.getSubTask(5);
 
-        System.out.println(taskManager.getTaskList());
-        System.out.println(taskManager.getEpicList());
-        System.out.println(taskManager.getSubTaskList());
+        taskManager.getEpic(6);
+        taskManager.getSubTask(7);
+
+        taskManager.getTask(8);
+        taskManager.getTask(9);
+        taskManager.getTask(10);
+        taskManager.getTask(11);
+
+        //Выводим историю просмотров задач
+        for (Task task : taskManager.getHistory()) {
+            System.out.println(task);
+        }
     }
 }
