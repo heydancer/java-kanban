@@ -10,72 +10,62 @@ public class Main {
 
         Task task1 = new Task("Java", "Сделать домашнее задание");
         Task task2 = new Task("Английский", "Поехать на занятие");
-        Task task3 = new Task("Немецкий", "Поехать на занятие");
-        Task task4 = new Task("Китайский", "Поехать на занятие");
-        Task task5 = new Task("Французский", "Поехать на занятие");
-        Task task6 = new Task("Японский", "Поехать на занятие");
 
         Epic epic1 = new Epic("Переезд", "Покупка новой квартиры");
         SubTask subTask1 = new SubTask("Собрать вещи", "Сложить все вещи по коробкам");
         SubTask subTask2 = new SubTask("Собрать игрушки собаки", "Найти все игрушки");
-
-        Epic epic2 = new Epic("Магазин", "Поход в магазин");
         SubTask subTask3 = new SubTask("Купить крупу", "Найти рис");
 
-        //Создаем задачи
+        Epic epic2 = new Epic("Решить задачу", "долго думать над линкед листом");
+
+        //-----------------Создание--------------------
+        //Создаем Tasks
         taskManager.createTask(task1);
         taskManager.createTask(task2);
-        taskManager.createTask(task3);
-        taskManager.createTask(task4);
-        taskManager.createTask(task5);
-        taskManager.createTask(task6);
-
+        //Создаем Epic и три SubTasks
         taskManager.createEpic(epic1);
-        taskManager.createEpic(epic2);
-
         taskManager.createSubTask(epic1, subTask1);
         taskManager.createSubTask(epic1, subTask2);
-        taskManager.createSubTask(epic2, subTask3);
+        taskManager.createSubTask(epic1, subTask3);
+        //Создаем Epic без SubTasks
+        taskManager.createEpic(epic2);
 
-        System.out.println("Создание Task: ");
-        for (Task task : taskManager.getTaskList()) {
+        //-----------------Просмотры--------------------
+        //Просмотрим epic2
+        taskManager.getEpic(epic2.getId());
+        //Просмотрим task1
+        taskManager.getTask(task1.getId());
+        //Просмотрим task2
+        taskManager.getTask(task2.getId());
+        //Просмотрим task1
+        taskManager.getTask(task1.getId());
+        //Просмотрим subTask3
+        taskManager.getSubTask(subTask3.getId());
+        //Просмотрим subTask2
+        taskManager.getSubTask(subTask2.getId());
+        //Просмотрим subTask1
+        taskManager.getSubTask(subTask1.getId());
+        //Просмотрим epic1
+        taskManager.getEpic(epic1.getId());
+        //Просмотрим subTask2
+        taskManager.getSubTask(subTask2.getId());
+
+        //Проверяем историю просмотров на повторы
+        System.out.println("История просмотров без повторов: ");
+        for (Task task : taskManager.getHistory()) {
             System.out.println(task);
         }
+
+        //---------------Проверка метода remove---------------
+        //Удаляем task1
+        taskManager.removeTask(task1.getId());
+
+        //Удаляем epic1
+        taskManager.removeEpic(epic1.getId());
+
+        //Проверяем историю просмотров после вызова методов removeTask и removeEpic
         System.out.println();
-
-        System.out.println("Создание Epic: ");
-        for (Epic epic : taskManager.getEpicList()) {
-            System.out.println(epic);
-        }
-        System.out.println();
-
-        System.out.println("Создание SubTask: ");
-        for (SubTask subTask : taskManager.getSubTaskList()) {
-            System.out.println(subTask);
-        }
-        System.out.println();
-
-        //Меняем статус одной из созданой SubTask
-        subTask1.setStatus(Status.DONE);
-        //Обновляем SubTask
-        taskManager.updateSubTask(subTask1);
-
-        //Обращаемся ко всем задачам
-        taskManager.getTask(1);
-        taskManager.getTask(2);
-        taskManager.getTask(3);
-        taskManager.getTask(4);
-        taskManager.getTask(5);
-        taskManager.getTask(6);
-
-        taskManager.getEpic(7);
-        taskManager.getEpic(8);
-
-        taskManager.getSubTask(9);
-        taskManager.getSubTask(10);
-        taskManager.getSubTask(11);
-
-        System.out.println("История просмотров: ");
+        System.out.println("История просмотров после удаления task1 и epic1: ");
         for (Task task : taskManager.getHistory()) {
             System.out.println(task);
         }
