@@ -4,7 +4,6 @@ import common.Epic;
 import common.SubTask;
 import common.Task;
 
-
 import java.util.List;
 
 public interface TaskManager {
