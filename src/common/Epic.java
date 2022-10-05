@@ -19,6 +19,7 @@ public class Epic extends Task {
         this.subTaskIds = subTaskIds;
     }
 
+
     @Override
     public String toString() {
         return "Epic{" +
@@ -27,6 +28,9 @@ public class Epic extends Task {
                 ", description='" + description + '\'' +
                 ", status='" + status + '\'' +
                 ", subTaskIds=" + subTaskIds +
+                ", duration=" + duration +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
                 '}';
     }
 }
