@@ -1,4 +1,6 @@
 id,type,name,status,description,epic,duration,startTime,endTime
-1,EPIC,Epic,NEW,Description Epic,,PT0S,null,null
+1,EPIC,Epic1,IN_PROGRESS,Description Epic1,,PT3H,2022-01-02T08:00,2022-01-02T11:00
+2,SUBTASK,New SubTask1,DONE,Description SubTask1,1,PT1H,2022-01-02T10:00,2022-01-02T11:00
+3,SUBTASK,New SubTask2,IN_PROGRESS,Description SubTask2,1,PT1H,2022-01-02T08:00,2022-01-02T09:00
 
 0

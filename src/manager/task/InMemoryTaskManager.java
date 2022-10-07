@@ -9,6 +9,7 @@ import manager.history.HistoryManager;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class InMemoryTaskManager implements TaskManager {
 
@@ -179,7 +180,6 @@ public class InMemoryTaskManager implements TaskManager {
         if (checkIntersection(task)) {
             taskTreeSet.add(task);
             taskMap.put(task.getId(), task);
-
         } else {
             throw new ManagerSaveException("Задача не сохранена, задачи не должны пересекаться по времени исполнения");
         }
@@ -215,8 +215,9 @@ public class InMemoryTaskManager implements TaskManager {
     public void updateTask(Task task) {
         if (taskMap.containsKey(task.getId())) {
             setTaskEndTime(task);
-            taskMap.put(task.getId(), task);
+            taskTreeSet.remove(taskMap.get(task.getId()));
             taskTreeSet.add(task);
+            taskMap.put(task.getId(), task);
         }
     }
 
@@ -231,6 +232,7 @@ public class InMemoryTaskManager implements TaskManager {
     public void updateSubTask(SubTask subTask) {
         if (subTaskMap.containsKey(subTask.getId())) {
             setTaskEndTime(subTask);
+            taskTreeSet.remove(subTaskMap.get(subTask.getId()));
             subTaskMap.put(subTask.getId(), subTask);
             int epicId = subTask.getEpicId();
 

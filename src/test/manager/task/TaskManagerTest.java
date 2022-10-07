@@ -236,24 +236,28 @@ abstract class TaskManagerTest<T extends TaskManager> {
     void shouldUpdateTask() {
         Task task1 = new Task("Task1", "Description Task1");
 
-        manager.createTask(task1);
+        int taskId = manager.createTask(task1);
 
-        task1.setName("New Task");
+        task1 = new Task("New Task", "Description Task1");
+        task1.setId(taskId);
         task1.setStatus(Status.IN_PROGRESS);
 
         manager.updateTask(task1);
 
         assertEquals("New Task", manager.getTask(1).getName());
         assertEquals(Status.IN_PROGRESS, manager.getTask(1).getStatus());
+
+        manager.getPrioritizedTasks().forEach(System.out::println);
     }
 
     @Test
     void shouldUpdateEpic() {
         Epic epic1 = new Epic("Epic1", "Description Epic1");
 
-        manager.createEpic(epic1);
+        int epicId = manager.createEpic(epic1);
 
-        epic1.setName("New Epic");
+        epic1 = new Epic("New Epic", "Description Epic1");
+        epic1.setId(epicId);
         epic1.setStatus(Status.IN_PROGRESS);
 
         manager.updateEpic(epic1);
@@ -270,15 +274,26 @@ abstract class TaskManagerTest<T extends TaskManager> {
         SubTask subTask2 = new SubTask("SubTask2", "Description SubTask2",
                 Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 2, 8, 0));
 
-        manager.createEpic(epic1);
-        manager.createSubTask(epic1, subTask1);
-        manager.createSubTask(epic1, subTask2);
+        int epicId = manager.createEpic(epic1);
+        int subTask1Id = manager.createSubTask(epic1, subTask1);
+        int subTask2Id = manager.createSubTask(epic1, subTask2);
 
         assertEquals(Status.NEW, epic1.getStatus());
         assertEquals(Status.NEW, subTask1.getStatus());
         assertEquals(Status.NEW, subTask2.getStatus());
 
+        subTask1 = new SubTask("New SubTask1", "Description SubTask1",
+                Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 2, 10, 0));
+        subTask1.setId(subTask1Id);
+        subTask1.setEpicId(epicId);
         subTask1.setStatus(Status.DONE);
+
+        manager.updateSubTask(subTask1);
+
+        subTask2 = new SubTask("New SubTask2", "Description SubTask2",
+                Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 2, 8, 0));
+        subTask2.setId(subTask2Id);
+        subTask2.setEpicId(epicId);
         subTask2.setStatus(Status.IN_PROGRESS);
 
         manager.updateSubTask(subTask2);
@@ -418,18 +433,19 @@ abstract class TaskManagerTest<T extends TaskManager> {
         Task task2 = new Task("Task2", "Description Task2",
                 Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 1, 8, 0));
 
-        manager.createTask(task1);
-        manager.createTask(task2);
-
         Epic epic1 = new Epic("Epic1", "Description Epic1");
         SubTask subTask1 = new SubTask("SubTask1", "Description SubTask1",
                 Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 2, 10, 0));
         SubTask subTask2 = new SubTask("SubTask2", "Description SubTask2",
                 Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 2, 8, 0));
 
+        manager.createTask(task1);
+        manager.createTask(task2);
+
         manager.createEpic(epic1);
         manager.createSubTask(epic1, subTask1);
         manager.createSubTask(epic1, subTask2);
+
 
         List<Task> prioritizedTasks = new ArrayList<>();
 
@@ -439,11 +455,54 @@ abstract class TaskManagerTest<T extends TaskManager> {
         prioritizedTasks.add(task1);
 
         int size = prioritizedTasks.size();
+
         assertEquals(size, manager.getPrioritizedTasks().size());
 
         int indexCounter = 0;
         for (Task task : manager.getPrioritizedTasks()) {
             assertEquals(task, prioritizedTasks.get(indexCounter++));
         }
+    }
+
+    @Test
+    void shouldUpdateTaskAndReturnPrioritizedTasks() {
+
+        Task task1 = new Task("Task1", "Description Task1");
+        Task task2 = new Task("Task2", "Description Task2",
+                Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 1, 8, 0));
+
+        Epic epic1 = new Epic("Epic1", "Description Epic1");
+        SubTask subTask1 = new SubTask("SubTask1", "Description SubTask1",
+                Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 2, 10, 0));
+        SubTask subTask2 = new SubTask("SubTask2", "Description SubTask2",
+                Duration.ofMinutes(60), LocalDateTime.of(2022, 1, 2, 8, 0));
+
+        int task1Id = manager.createTask(task1);
+        manager.createTask(task2);
+
+        manager.createEpic(epic1);
+        manager.createSubTask(epic1, subTask1);
+        manager.createSubTask(epic1, subTask2);
+
+        List<Task> expectedOrderList = new ArrayList<>();
+
+        task1 = new Task("Updated task1", "Task1 was update",
+                Duration.ofMinutes(120), LocalDateTime.of(2021, 1, 1, 0, 0));
+        task1.setId(task1Id);
+
+        expectedOrderList.add(task1);
+        expectedOrderList.add(task2);
+        expectedOrderList.add(subTask2);
+        expectedOrderList.add(subTask1);
+
+        manager.updateTask(task1);
+
+        int indexCounter = 0;
+
+        for (Task task : manager.getPrioritizedTasks()) {
+            assertEquals(task, expectedOrderList.get(indexCounter++));
+        }
+
+        assertEquals(LocalDateTime.of(2021, 1, 1, 2, 0), task1.getEndTime());
     }
 }
