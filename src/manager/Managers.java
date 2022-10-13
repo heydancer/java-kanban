@@ -2,6 +2,7 @@ package manager;
 
 import manager.history.HistoryManager;
 import manager.history.InMemoryHistoryManager;
+import manager.http.HTTPTaskManager;
 import manager.task.FileBackedTasksManager;
 import manager.task.InMemoryTaskManager;
 import manager.task.TaskManager;
@@ -13,7 +14,7 @@ public class Managers {
     }
 
     public static TaskManager getDefault() {
-        return new InMemoryTaskManager();
+        return new HTTPTaskManager("http://localhost:8078");
     }
 
     public static TaskManager getDefaultFileManager() {

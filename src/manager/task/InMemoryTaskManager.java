@@ -13,9 +13,9 @@ import java.util.function.Predicate;
 
 public class InMemoryTaskManager implements TaskManager {
 
-    protected final HashMap<Integer, Task> taskMap = new HashMap<>();
-    protected final HashMap<Integer, SubTask> subTaskMap = new HashMap<>();
-    protected final HashMap<Integer, Epic> epicMap = new HashMap<>();
+    protected HashMap<Integer, Task> taskMap = new HashMap<>();
+    protected HashMap<Integer, SubTask> subTaskMap = new HashMap<>();
+    protected HashMap<Integer, Epic> epicMap = new HashMap<>();
     protected final HistoryManager historyManager = Managers.getDefaultHistory();
     protected final TreeSet<Task> taskTreeSet = new TreeSet<>((o1, o2) -> {
         if (o1.getStartTime() == null && o2.getStartTime() == null) return o1.getId() - o2.getId();
@@ -49,9 +49,11 @@ public class InMemoryTaskManager implements TaskManager {
                     end = subTaskMap.get(id).getEndTime();
                 }
             }
+
             epic.setStartTime(start);
             epic.setEndTime(end);
             epic.setDuration(Duration.between(epic.getStartTime(), epic.getEndTime()));
+
         } else {
             epic.setStartTime(null);
             epic.setEndTime(null);
@@ -175,6 +177,15 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public int createTask(Task task) {
         task.setId(nextId++);
+
+        if (task.getDuration() == null) {
+            task.setDuration(Duration.ZERO);
+        }
+
+        if (task.getStatus() == null) {
+            task.setStatus(Status.NEW);
+        }
+
         setTaskEndTime(task);
 
         if (checkIntersection(task)) {
@@ -189,6 +200,19 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public int createEpic(Epic epic) {
         epic.setId(nextId++);
+
+        if (epic.getSubTaskIds() == null) {
+            epic.setSubTaskIds(new ArrayList<>());
+        }
+
+        if (epic.getDuration() == null) {
+            epic.setDuration(Duration.ZERO);
+        }
+
+        if (epic.getStatus() == null) {
+            epic.setStatus(Status.NEW);
+        }
+
         epicMap.put(epic.getId(), epic);
         return epic.getId();
     }
@@ -196,6 +220,15 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public int createSubTask(Epic epic, SubTask subTask) {
         subTask.setId(nextId++);
+
+        if (subTask.getDuration() == null) {
+            subTask.setDuration(Duration.ZERO);
+        }
+
+        if (subTask.getStatus() == null) {
+            subTask.setStatus(Status.NEW);
+        }
+
         setTaskEndTime(subTask);
         epic.getSubTaskIds().add(subTask.getId());
         subTask.setEpicId(epic.getId());
@@ -203,6 +236,11 @@ public class InMemoryTaskManager implements TaskManager {
         if (checkIntersection(subTask)) {
             taskTreeSet.add(subTask);
             subTaskMap.put(subTask.getId(), subTask);
+
+            if (subTask.getStartTime() == null) {
+                return subTask.getId();
+            }
+
             setEpicEndTimeAndDuration(epic);
 
         } else {

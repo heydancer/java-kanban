@@ -19,7 +19,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
 
     private static final File PATH_FILE = new File("resources/data.csv");
 
-    private void save() {
+    protected void save() {
 
         final String header = "id,type,name,status,description,epic,duration,startTime,endTime";
 
