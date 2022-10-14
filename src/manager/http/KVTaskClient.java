@@ -41,7 +41,7 @@ public class KVTaskClient {
             if (response.statusCode() == 200) {
                 System.out.println("Метод put успешно отработал");
             } else {
-                System.out.println("Ошибка в методе put " + response.statusCode());
+                System.out.println("Ошибка в методе put: " + response.statusCode());
             }
         } catch (NullPointerException | InterruptedException | IOException e) {
             System.out.println(e.getMessage());
@@ -59,13 +59,11 @@ public class KVTaskClient {
             if (response.statusCode() == 200) {
                 managerStatusToLoad = response.body();
             } else {
-                System.out.println("Ошибка в методе load - код запроса - " + response.statusCode());
+                System.out.println("Ошибка в методе load: " + response.statusCode());
             }
         } catch (NullPointerException | InterruptedException | IOException e) {
             System.out.println("Ошибка в методе load");
         }
         return managerStatusToLoad;
     }
-
-
 }

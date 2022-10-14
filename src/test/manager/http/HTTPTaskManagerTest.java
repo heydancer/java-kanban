@@ -4,6 +4,7 @@ import common.Epic;
 import common.SubTask;
 import common.Task;
 import manager.Managers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,10 +26,12 @@ class HTTPTaskManagerTest {
     private SubTask subTask1;
     private SubTask subTask2;
     private HTTPTaskManager manager;
+    private static KVServer kvServer;
 
     @BeforeAll
     public static void beforeAll() throws IOException {
-        new KVServer().start();
+        kvServer = new KVServer();
+        kvServer.start();
     }
 
     @BeforeEach
@@ -111,5 +114,10 @@ class HTTPTaskManagerTest {
         assertFalse(manager.getTaskList().isEmpty());
         assertFalse(manager.getEpicList().isEmpty());
         assertFalse(manager.getSubTaskList().isEmpty());
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        kvServer.stop();
     }
 }

@@ -12,7 +12,6 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 
-
 public class HTTPTaskManager extends FileBackedTasksManager {
 
     private final KVTaskClient kvTaskClient;
@@ -22,8 +21,6 @@ public class HTTPTaskManager extends FileBackedTasksManager {
         this.kvTaskClient = new KVTaskClient(url);
     }
 
-
-
     @Override
     protected void save() {
         try {
@@ -32,7 +29,7 @@ public class HTTPTaskManager extends FileBackedTasksManager {
             kvTaskClient.put("tasks/subtask", gson.toJson(subTaskMap));
             kvTaskClient.put("tasks/history", gson.toJson(getHistory()));
         } catch (Exception e) {
-            throw new ManagerSaveException("Ошибка в сохранении");
+            throw new ManagerSaveException("Не удалось сохранить задачи");
         }
     }
 
