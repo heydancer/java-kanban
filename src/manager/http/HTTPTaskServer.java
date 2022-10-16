@@ -41,7 +41,7 @@ public class HTTPTaskServer {
         server.start();
     }
 
-    void stop() {
+    public void stop() {
         server.stop(1);
     }
 
@@ -50,285 +50,131 @@ public class HTTPTaskServer {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-
-            String response = "";
-
-            int statusCode = 404;
-
             String method = exchange.getRequestMethod();
-            String path = exchange.getRequestURI().getPath();
-            String query = exchange.getRequestURI().getQuery();
 
             switch (method) {
-
                 case "GET":
-
-                    if (path.endsWith("/tasks") && query == null) {
-                        statusCode = 200;
-
-                        response = gson.toJson(manager.getPrioritizedTasks());
-
-                    }
-
-                    if (path.endsWith("tasks/subtask/epic") && query != null) {
-                        statusCode = 200;
-                        String[] splitQuery = query.split("=");
-                        int taskId = Integer.parseInt(splitQuery[1]);
-
-                        response = gson.toJson(manager.getAllSubTaskOfEpic(manager.getEpic(taskId)));
-                    }
-
-                    if (path.endsWith("tasks/task")) {
-                        if (query != null) {
-                            List<Task> taskList = manager.getTaskList();
-                            Task taskForReturn = null;
-
-                            String[] splitQuery = query.split("=");
-                            int taskId = Integer.parseInt(splitQuery[1]);
-
-                            for (Task task : taskList) {
-                                if (taskId == task.getId()) {
-                                    taskForReturn = manager.getTask(taskId);
-                                    statusCode = 200;
-
-                                    response = gson.toJson(manager.getTask(taskId));
-                                }
-                            }
-
-                            if (taskForReturn == null) {
-                                statusCode = 400;
-
-                                response = "Необходимо указать корректный id задачи, task c " + taskId + " не существует";
-                            }
-
-                        } else {
-                            statusCode = 200;
-
-                            response = gson.toJson(manager.getTaskList());
-                        }
-                    }
-
-                    if (path.endsWith("tasks/history") && query == null) {
-                        statusCode = 200;
-
-                        response = gson.toJson(manager.getHistory());
-                    }
-
-                    if (path.endsWith("tasks/epic")) {
-                        if (query != null) {
-                            List<Epic> epicList = manager.getEpicList();
-                            Epic epicForReturn = null;
-
-                            String[] splitQuery = query.split("=");
-                            int epicId = Integer.parseInt(splitQuery[1]);
-
-                            for (Epic epic : epicList) {
-                                if (epicId == epic.getId()) {
-                                    epicForReturn = manager.getEpic(epicId);
-                                    statusCode = 200;
-
-                                    response = gson.toJson(manager.getEpic(epicId));
-                                }
-                            }
-
-                            if (epicForReturn == null) {
-                                statusCode = 400;
-
-                                response = "Необходимо указать корректный id задачи, epic c " + epicId + " не существует";
-                            }
-                        } else {
-                            statusCode = 200;
-
-                            response = gson.toJson(manager.getEpicList());
-                        }
-                    }
-
-                    if (path.endsWith("tasks/subtask")) {
-                        if (query != null) {
-                            List<SubTask> subTaskList = manager.getSubTaskList();
-                            SubTask subTaskForReturn = null;
-
-                            String[] splitQuery = query.split("=");
-                            int subTaskId = Integer.parseInt(splitQuery[1]);
-
-                            for (SubTask subTask : subTaskList) {
-                                if (subTaskId == subTask.getId()) {
-                                    subTaskForReturn = manager.getSubTask(subTaskId);
-                                    statusCode = 200;
-
-                                    response = gson.toJson(manager.getSubTask(subTaskId));
-                                }
-                            }
-
-                            if (subTaskForReturn == null) {
-                                statusCode = 400;
-
-                                response = "Необходимо указать корректный id задачи, SubTask c " + subTaskId + " не существует";
-                            }
-
-                        } else {
-                            statusCode = 200;
-
-                            response = gson.toJson(manager.getSubTaskList());
-                        }
-                    }
-
+                    handlesGetProcessing(exchange);
                     break;
 
                 case "POST":
-
-                    InputStream inputStream = exchange.getRequestBody();
-                    if (inputStream != null) {
-                        String body = new String(inputStream.readAllBytes(), CHARSET);
-                        if (query == null) {
-                            if (path.endsWith("tasks/task")) {
-                                statusCode = 201;
-                                Task newTask = gson.fromJson(body, Task.class);
-                                manager.createTask(newTask);
-
-                                response = "Задача типа Task создана";
-
-                            } else if (path.endsWith("tasks/epic")) {
-                                statusCode = 201;
-                                Epic newEpic = gson.fromJson(body, Epic.class);
-                                manager.createEpic(newEpic);
-
-                                response = "Задача типа Epic создана";
-
-                            } else if (path.endsWith("tasks/subtask")) {
-                                SubTask newSubTask = gson.fromJson(body, SubTask.class);
-
-                                List<Epic> epicList = manager.getEpicList();
-
-                                Epic epicForSubTask = null;
-
-                                for (Epic epic : epicList) {
-                                    if (epic.getId() == newSubTask.getEpicId()) {
-                                        epicForSubTask = manager.getEpic(epic.getId());
-                                        statusCode = 201;
-                                        manager.createSubTask(epic, newSubTask);
-                                        manager.updateSubTask(newSubTask);
-
-                                        response = "Задача типа SubTask создана";
-                                    }
-                                }
-                                if (epicForSubTask == null) {
-                                    statusCode = 400;
-
-                                    response = "Необходимо указать корректный id Epic в теле Subtask";
-                                }
-                            }
-                        }
-                    }
+                    handlesPostProcessing(exchange);
                     break;
 
                 case "DELETE":
-
-                    if (path.endsWith("/tasks") && query == null) {
-                        statusCode = 200;
-                        manager.removeAllTask();
-                        manager.removeAllEpic();
-                        manager.getPrioritizedTasks().clear();
-
-                        response = "Все задачи удалены";
-                    }
-
-                    if (path.endsWith("tasks/task")) {
-                        if (query != null) {
-                            List<Task> taskList = manager.getTaskList();
-                            Task taskForRemove = null;
-
-                            String[] splitQuery = query.split("=");
-                            int taskId = Integer.parseInt(splitQuery[1]);
-
-                            for (Task task : taskList) {
-                                if (taskId == task.getId()) {
-                                    taskForRemove = manager.getTask(taskId);
-                                    statusCode = 200;
-                                    manager.removeTask(taskId);
-
-                                    response = "Задача типа TASK с ID " + taskId + " удалена";
-                                }
-                            }
-
-                            if (taskForRemove == null) {
-                                statusCode = 400;
-
-                                response = "Необходимо указать корректный id задачи, task c " + taskId + " не существует";
-                            }
-                        } else {
-                            statusCode = 200;
-                            manager.removeAllTask();
-
-                            response = "удалены все задачи типа TASK";
-                        }
-                    }
-
-                    if (path.endsWith("tasks/epic")) {
-                        if (query != null) {
-                            List<Epic> epicList = manager.getEpicList();
-                            Epic epicForRemove = null;
-
-                            String[] splitQuery = query.split("=");
-                            int epicId = Integer.parseInt(splitQuery[1]);
-
-                            for (Epic epic : epicList) {
-                                if (epicId == epic.getId()) {
-                                    epicForRemove = manager.getEpic(epicId);
-                                    statusCode = 200;
-
-                                    manager.getAllSubTaskOfEpic(epic).clear();
-                                    manager.removeEpic(epicId);
-
-                                    response = "Задача типа EPIC с ID " + epicId + " удалена";
-                                }
-                            }
-
-                            if (epicForRemove == null) {
-                                statusCode = 400;
-
-                                response = "Необходимо указать корректный id задачи, epic c " + epicId + " не существует";
-                            }
-                        } else {
-                            statusCode = 200;
-                            manager.removeAllEpic();
-
-                            response = "удалены все задачи типа EPIC";
-                        }
-                    }
-
-                    if (path.endsWith("tasks/subtask")) {
-                        if (query != null) {
-                            List<SubTask> subTaskList = manager.getSubTaskList();
-                            SubTask subTaskForRemove = null;
-
-                            String[] splitQuery = query.split("=");
-                            int subTaskId = Integer.parseInt(splitQuery[1]);
-
-                            for (SubTask subTask : subTaskList) {
-                                if (subTaskId == subTask.getId()) {
-                                    subTaskForRemove = manager.getSubTask(subTaskId);
-                                    statusCode = 200;
-                                    manager.removeSubTask(subTaskId);
-
-                                    response = "Задача типа SubTask с ID " + subTaskId + " удалена";
-                                }
-                            }
-
-                            if (subTaskForRemove == null) {
-                                statusCode = 400;
-
-                                response = "Необходимо указать корректный id задачи, SubTask c " + subTaskId + " не существует";
-                            }
-                        } else {
-                            statusCode = 200;
-                            manager.removeAllSubTask();
-
-                            response = "удалены все задачи типа SUBTASK";
-                        }
-                    }
-
+                    handlesDeleteProcessing(exchange);
                     break;
+            }
+        }
+
+        private void handlesGetProcessing(HttpExchange exchange) throws IOException {
+            String response = "";
+            int statusCode = 404;
+
+            String path = exchange.getRequestURI().getPath();
+            String query = exchange.getRequestURI().getQuery();
+
+            if (path.endsWith("/tasks") && query == null) {
+                statusCode = 200;
+                response = gson.toJson(manager.getPrioritizedTasks());
+            }
+            if (path.endsWith("tasks/subtask/epic") && query != null) {
+                statusCode = 200;
+                String[] splitQuery = query.split("=");
+                int taskId = Integer.parseInt(splitQuery[1]);
+                response = gson.toJson(manager.getAllSubTaskOfEpic(manager.getEpic(taskId)));
+            }
+            if (path.endsWith("tasks/task")) {
+                if (query != null) {
+                    List<Task> taskList = manager.getTaskList();
+                    Task taskForReturn = null;
+
+                    String[] splitQuery = query.split("=");
+                    int taskId = Integer.parseInt(splitQuery[1]);
+
+                    for (Task task : taskList) {
+                        if (taskId == task.getId()) {
+                            taskForReturn = manager.getTask(taskId);
+                            statusCode = 200;
+
+                            response = gson.toJson(manager.getTask(taskId));
+                        }
+                    }
+                    if (taskForReturn == null) {
+                        statusCode = 400;
+
+                        response = "Необходимо указать корректный id задачи, task c " + taskId + " не существует";
+                    }
+                } else {
+                    statusCode = 200;
+
+                    response = gson.toJson(manager.getTaskList());
+                }
+            }
+
+            if (path.endsWith("tasks/history") && query == null) {
+                statusCode = 200;
+
+                response = gson.toJson(manager.getHistory());
+            }
+
+            if (path.endsWith("tasks/epic")) {
+                if (query != null) {
+                    List<Epic> epicList = manager.getEpicList();
+                    Epic epicForReturn = null;
+
+                    String[] splitQuery = query.split("=");
+                    int epicId = Integer.parseInt(splitQuery[1]);
+
+                    for (Epic epic : epicList) {
+                        if (epicId == epic.getId()) {
+                            epicForReturn = manager.getEpic(epicId);
+                            statusCode = 200;
+
+                            response = gson.toJson(manager.getEpic(epicId));
+                        }
+                    }
+
+                    if (epicForReturn == null) {
+                        statusCode = 400;
+
+                        response = "Необходимо указать корректный id задачи, epic c " + epicId + " не существует";
+                    }
+                } else {
+                    statusCode = 200;
+
+                    response = gson.toJson(manager.getEpicList());
+                }
+            }
+
+            if (path.endsWith("tasks/subtask")) {
+                if (query != null) {
+                    List<SubTask> subTaskList = manager.getSubTaskList();
+                    SubTask subTaskForReturn = null;
+
+                    String[] splitQuery = query.split("=");
+                    int subTaskId = Integer.parseInt(splitQuery[1]);
+
+                    for (SubTask subTask : subTaskList) {
+                        if (subTaskId == subTask.getId()) {
+                            subTaskForReturn = manager.getSubTask(subTaskId);
+                            statusCode = 200;
+
+                            response = gson.toJson(manager.getSubTask(subTaskId));
+                        }
+                    }
+
+                    if (subTaskForReturn == null) {
+                        statusCode = 400;
+
+                        response = "Необходимо указать корректный id задачи, SubTask c " + subTaskId + " не существует";
+                    }
+
+                } else {
+                    statusCode = 200;
+
+                    response = gson.toJson(manager.getSubTaskList());
+                }
             }
 
             exchange.sendResponseHeaders(statusCode, response.getBytes(CHARSET).length);
@@ -336,8 +182,183 @@ public class HTTPTaskServer {
                 outputStream.write(response.getBytes(CHARSET));
             }
         }
+
+        private void handlesPostProcessing(HttpExchange exchange) throws IOException {
+            String response = "";
+            int statusCode = 404;
+
+            String path = exchange.getRequestURI().getPath();
+            String query = exchange.getRequestURI().getQuery();
+
+            InputStream inputStream = exchange.getRequestBody();
+            if (inputStream != null) {
+                String body = new String(inputStream.readAllBytes(), CHARSET);
+                if (query == null) {
+                    if (path.endsWith("tasks/task")) {
+                        statusCode = 201;
+                        Task newTask = gson.fromJson(body, Task.class);
+                        manager.createTask(newTask);
+
+                        response = "Задача типа Task создана";
+
+                    } else if (path.endsWith("tasks/epic")) {
+                        statusCode = 201;
+                        Epic newEpic = gson.fromJson(body, Epic.class);
+                        manager.createEpic(newEpic);
+
+                        response = "Задача типа Epic создана";
+
+                    } else if (path.endsWith("tasks/subtask")) {
+                        SubTask newSubTask = gson.fromJson(body, SubTask.class);
+
+                        List<Epic> epicList = manager.getEpicList();
+
+                        Epic epicForSubTask = null;
+
+                        for (Epic epic : epicList) {
+                            if (epic.getId() == newSubTask.getEpicId()) {
+                                epicForSubTask = manager.getEpic(epic.getId());
+                                statusCode = 201;
+                                manager.createSubTask(epic, newSubTask);
+                                manager.updateSubTask(newSubTask);
+
+                                response = "Задача типа SubTask создана";
+                            }
+                        }
+                        if (epicForSubTask == null) {
+                            statusCode = 400;
+
+                            response = "Необходимо указать корректный id Epic в теле Subtask";
+                        }
+                    }
+                }
+            }
+            exchange.sendResponseHeaders(statusCode, response.getBytes(CHARSET).length);
+            try (OutputStream outputStream = exchange.getResponseBody()) {
+                outputStream.write(response.getBytes(CHARSET));
+            }
+
+        }
+
+        private void handlesDeleteProcessing(HttpExchange exchange) throws IOException {
+
+            String response = "";
+            int statusCode = 404;
+
+            String path = exchange.getRequestURI().getPath();
+            String query = exchange.getRequestURI().getQuery();
+
+            if (path.endsWith("/tasks") && query == null) {
+                statusCode = 200;
+                manager.removeAllTask();
+                manager.removeAllEpic();
+                manager.getPrioritizedTasks().clear();
+
+                response = "Все задачи удалены";
+            }
+
+            if (path.endsWith("tasks/task")) {
+                if (query != null) {
+                    List<Task> taskList = manager.getTaskList();
+                    Task taskForRemove = null;
+
+                    String[] splitQuery = query.split("=");
+                    int taskId = Integer.parseInt(splitQuery[1]);
+
+                    for (Task task : taskList) {
+                        if (taskId == task.getId()) {
+                            taskForRemove = manager.getTask(taskId);
+                            statusCode = 200;
+                            manager.removeTask(taskId);
+
+                            response = "Задача типа TASK с ID " + taskId + " удалена";
+                        }
+                    }
+
+                    if (taskForRemove == null) {
+                        statusCode = 400;
+
+                        response = "Необходимо указать корректный id задачи, task c " + taskId + " не существует";
+                    }
+                } else {
+                    statusCode = 200;
+                    manager.removeAllTask();
+
+                    response = "удалены все задачи типа TASK";
+                }
+            }
+
+            if (path.endsWith("tasks/epic")) {
+                if (query != null) {
+                    List<Epic> epicList = manager.getEpicList();
+                    Epic epicForRemove = null;
+
+                    String[] splitQuery = query.split("=");
+                    int epicId = Integer.parseInt(splitQuery[1]);
+
+                    for (Epic epic : epicList) {
+                        if (epicId == epic.getId()) {
+                            epicForRemove = manager.getEpic(epicId);
+                            statusCode = 200;
+
+                            manager.getAllSubTaskOfEpic(epic).clear();
+                            manager.removeEpic(epicId);
+
+                            response = "Задача типа EPIC с ID " + epicId + " удалена";
+                        }
+                    }
+
+                    if (epicForRemove == null) {
+                        statusCode = 400;
+
+                        response = "Необходимо указать корректный id задачи, epic c " + epicId + " не существует";
+                    }
+                } else {
+                    statusCode = 200;
+                    manager.removeAllEpic();
+
+                    response = "удалены все задачи типа EPIC";
+                }
+            }
+
+            if (path.endsWith("tasks/subtask")) {
+                if (query != null) {
+                    List<SubTask> subTaskList = manager.getSubTaskList();
+                    SubTask subTaskForRemove = null;
+
+                    String[] splitQuery = query.split("=");
+                    int subTaskId = Integer.parseInt(splitQuery[1]);
+
+                    for (SubTask subTask : subTaskList) {
+                        if (subTaskId == subTask.getId()) {
+                            subTaskForRemove = manager.getSubTask(subTaskId);
+                            statusCode = 200;
+                            manager.removeSubTask(subTaskId);
+
+                            response = "Задача типа SubTask с ID " + subTaskId + " удалена";
+                        }
+                    }
+
+                    if (subTaskForRemove == null) {
+                        statusCode = 400;
+
+                        response = "Необходимо указать корректный id задачи, SubTask c " + subTaskId + " не существует";
+                    }
+                } else {
+                    statusCode = 200;
+                    manager.removeAllSubTask();
+
+                    response = "удалены все задачи типа SUBTASK";
+                }
+            }
+            exchange.sendResponseHeaders(statusCode, response.getBytes(CHARSET).length);
+            try (OutputStream outputStream = exchange.getResponseBody()) {
+                outputStream.write(response.getBytes(CHARSET));
+            }
+        }
     }
 }
+
 
 
 

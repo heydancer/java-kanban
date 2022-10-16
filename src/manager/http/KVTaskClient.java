@@ -9,11 +9,16 @@ import java.net.http.HttpResponse;
 public class KVTaskClient {
     public HttpClient client;
     private String token;
-    private final URI url;
+    private URI url;
 
     public KVTaskClient(String url) {
-        this.client = HttpClient.newHttpClient();
+        register(url);
+    }
+
+    private void register(String url) {
         this.url = URI.create(url);
+        this.client = HttpClient.newHttpClient();
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/register"))
                 .GET()
@@ -28,6 +33,7 @@ public class KVTaskClient {
         } catch (NullPointerException | IOException | InterruptedException e) {
             System.out.println("Ошибка при регистрации");
         }
+
     }
 
     public void put(String key, String json) {
