@@ -1,9 +1,11 @@
 package manager.http;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import common.Epic;
 import common.SubTask;
 import common.Task;
+import manager.task.TaskManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +13,14 @@ import org.junit.jupiter.api.Test;
 import server.KVServer;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,6 +35,7 @@ class HTTPTaskServerTest {
     private static SubTask subTask1;
     private static SubTask subTask2;
     private static HttpClient client;
+    private static TaskManager manager;
 
     private static final URI url = URI.create("http://localhost:8080");
     private static final String FAKE_URL = "/fake_url";
@@ -58,6 +63,8 @@ class HTTPTaskServerTest {
 
         httpTaskServer = new HTTPTaskServer();
         httpTaskServer.start();
+
+        manager = httpTaskServer.getManager();
     }
 
     @AfterEach
@@ -65,7 +72,6 @@ class HTTPTaskServerTest {
         kvServer.stop();
         httpTaskServer.stop();
     }
-
 
     @Test
     void shouldCheckPostMethod() throws IOException, InterruptedException {
@@ -76,6 +82,7 @@ class HTTPTaskServerTest {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(201, response.statusCode());
+        assertEquals(1, manager.getTaskList().size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/epic"))
@@ -84,6 +91,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(201, response.statusCode());
+        assertEquals(1, manager.getEpicList().size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/subtask"))
@@ -92,6 +100,8 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(201, response.statusCode());
+        assertEquals(1, manager.getSubTaskList().size());
+        assertEquals(2, manager.getPrioritizedTasks().size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + FAKE_URL))
@@ -111,6 +121,7 @@ class HTTPTaskServerTest {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertTrue(manager.getPrioritizedTasks().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/task"))
@@ -119,6 +130,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertTrue(manager.getTaskList().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/epic"))
@@ -127,6 +139,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertTrue(manager.getEpicList().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/subtask"))
@@ -135,6 +148,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertTrue(manager.getSubTaskList().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + FAKE_URL))
@@ -157,6 +171,10 @@ class HTTPTaskServerTest {
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
+        Task taskForCheck = manager.getTask(1);
+        Task taskFromResponse = gson.fromJson(response.body(), Task.class);
+        assertEquals(taskForCheck, taskFromResponse);
+
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/epic?id=2"))
                 .GET()
@@ -164,6 +182,10 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+
+        Epic epicForCheck = manager.getEpic(2);
+        Epic epicFromResponse = gson.fromJson(response.body(), Epic.class);
+        assertEquals(epicForCheck, epicFromResponse);
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/subtask?id=3"))
@@ -173,6 +195,10 @@ class HTTPTaskServerTest {
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
 
+        SubTask subTaskForCheck = manager.getSubTask(3);
+        SubTask subTaskFromResponse = gson.fromJson(response.body(), SubTask.class);
+        assertEquals(subTaskForCheck, subTaskFromResponse);
+
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/subtask/epic?id=2"))
                 .GET()
@@ -180,6 +206,13 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+
+        Type typeToken = new TypeToken<List<SubTask>>() {
+        }.getType();
+
+        List<SubTask> allSubTaskForCheck = manager.getAllSubTaskOfEpic(manager.getEpic(2));
+        List<SubTask> allSubTaskFromResponse = gson.fromJson(response.body(), typeToken);
+        assertEquals(allSubTaskForCheck.size(), allSubTaskFromResponse.size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/task?id=" + FAKE_ID))
@@ -201,6 +234,7 @@ class HTTPTaskServerTest {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertFalse(manager.getHistory().isEmpty());
 
     }
 
@@ -213,6 +247,7 @@ class HTTPTaskServerTest {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertTrue(manager.getPrioritizedTasks().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/task"))
@@ -221,6 +256,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertTrue(manager.getTaskList().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/epic"))
@@ -229,6 +265,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertTrue(manager.getEpicList().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/subtask"))
@@ -237,14 +274,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
-
-        request = HttpRequest.newBuilder()
-                .uri(URI.create(url + "/tasks"))
-                .DELETE()
-                .build();
-
-        response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        assertEquals(200, response.statusCode());
+        assertTrue(manager.getSubTaskList().isEmpty());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + FAKE_URL))
@@ -258,6 +288,13 @@ class HTTPTaskServerTest {
     @Test
     void shouldCheckDeleteMethodById() throws IOException, InterruptedException {
         createAllTask();
+        assertNotNull(manager.getTask(1));
+        assertNotNull(manager.getSubTask(3));
+        assertNotNull(manager.getSubTask(4));
+        assertNotNull(manager.getEpic(2));
+        assertEquals(1, manager.getTaskList().size());
+        assertEquals(1, manager.getEpicList().size());
+        assertEquals(2, manager.getSubTaskList().size());
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/task?id=1"))
@@ -266,6 +303,7 @@ class HTTPTaskServerTest {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertEquals(0, manager.getTaskList().size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/subtask?id=3"))
@@ -274,6 +312,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertEquals(1, manager.getSubTaskList().size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/subtask?id=4"))
@@ -282,6 +321,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertEquals(0, manager.getSubTaskList().size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/epic?id=2"))
@@ -290,6 +330,7 @@ class HTTPTaskServerTest {
 
         response = client.send(request, HttpResponse.BodyHandlers.ofString());
         assertEquals(200, response.statusCode());
+        assertEquals(0, manager.getEpicList().size());
 
         request = HttpRequest.newBuilder()
                 .uri(URI.create(url + "/tasks/task?id=" + FAKE_ID))

@@ -246,8 +246,6 @@ abstract class TaskManagerTest<T extends TaskManager> {
 
         assertEquals("New Task", manager.getTask(1).getName());
         assertEquals(Status.IN_PROGRESS, manager.getTask(1).getStatus());
-
-        manager.getPrioritizedTasks().forEach(System.out::println);
     }
 
     @Test

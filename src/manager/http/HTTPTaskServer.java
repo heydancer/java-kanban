@@ -22,6 +22,7 @@ public class HTTPTaskServer {
     private static final int PORT = 8080;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private final Gson gson;
+
     private final TaskManager manager;
     private final HttpServer server;
 
@@ -31,6 +32,10 @@ public class HTTPTaskServer {
         server = HttpServer.create();
         server.bind(new InetSocketAddress(PORT), 0);
         server.createContext("/tasks", new TasksHandler());
+    }
+
+    public TaskManager getManager() {
+        return manager;
     }
 
     public void start() {
@@ -320,6 +325,7 @@ public class HTTPTaskServer {
             String[] splitQuery = query.split("=");
             return Integer.parseInt(splitQuery[1]);
         }
+
     }
 }
 
