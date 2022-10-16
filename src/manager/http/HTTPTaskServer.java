@@ -17,7 +17,6 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 public class HTTPTaskServer {
     private static final int PORT = 8080;
@@ -27,10 +26,7 @@ public class HTTPTaskServer {
     private final HttpServer server;
 
     public HTTPTaskServer() throws IOException {
-        gson = new Gson()
-                .newBuilder()
-                .setPrettyPrinting()
-                .create();
+        gson = new Gson().newBuilder().setPrettyPrinting().create();
         manager = Managers.getDefault();
         server = HttpServer.create();
         server.bind(new InetSocketAddress(PORT), 0);
@@ -78,101 +74,86 @@ public class HTTPTaskServer {
                 statusCode = 200;
                 response = gson.toJson(manager.getPrioritizedTasks());
             }
+
             if (path.endsWith("tasks/subtask/epic") && query != null) {
                 statusCode = 200;
-                String[] splitQuery = query.split("=");
-                int taskId = Integer.parseInt(splitQuery[1]);
+                int taskId = getIdFromQuery(query);
                 response = gson.toJson(manager.getAllSubTaskOfEpic(manager.getEpic(taskId)));
             }
+
             if (path.endsWith("tasks/task")) {
                 if (query != null) {
-                    List<Task> taskList = manager.getTaskList();
                     Task taskForReturn = null;
+                    int taskId = getIdFromQuery(query);
 
-                    String[] splitQuery = query.split("=");
-                    int taskId = Integer.parseInt(splitQuery[1]);
-
-                    for (Task task : taskList) {
+                    for (Task task : manager.getTaskList()) {
                         if (taskId == task.getId()) {
                             taskForReturn = manager.getTask(taskId);
                             statusCode = 200;
-
-                            response = gson.toJson(manager.getTask(taskId));
+                            response = gson.toJson(taskForReturn);
                         }
                     }
+
                     if (taskForReturn == null) {
                         statusCode = 400;
-
                         response = "Необходимо указать корректный id задачи, task c " + taskId + " не существует";
                     }
+
                 } else {
                     statusCode = 200;
-
                     response = gson.toJson(manager.getTaskList());
                 }
             }
 
             if (path.endsWith("tasks/history") && query == null) {
                 statusCode = 200;
-
                 response = gson.toJson(manager.getHistory());
             }
 
             if (path.endsWith("tasks/epic")) {
                 if (query != null) {
-                    List<Epic> epicList = manager.getEpicList();
                     Epic epicForReturn = null;
+                    int epicId = getIdFromQuery(query);
 
-                    String[] splitQuery = query.split("=");
-                    int epicId = Integer.parseInt(splitQuery[1]);
-
-                    for (Epic epic : epicList) {
+                    for (Epic epic : manager.getEpicList()) {
                         if (epicId == epic.getId()) {
                             epicForReturn = manager.getEpic(epicId);
                             statusCode = 200;
-
-                            response = gson.toJson(manager.getEpic(epicId));
+                            response = gson.toJson(epicForReturn);
                         }
                     }
 
                     if (epicForReturn == null) {
                         statusCode = 400;
-
                         response = "Необходимо указать корректный id задачи, epic c " + epicId + " не существует";
                     }
+
                 } else {
                     statusCode = 200;
-
                     response = gson.toJson(manager.getEpicList());
                 }
             }
 
             if (path.endsWith("tasks/subtask")) {
                 if (query != null) {
-                    List<SubTask> subTaskList = manager.getSubTaskList();
                     SubTask subTaskForReturn = null;
+                    int subTaskId = getIdFromQuery(query);
 
-                    String[] splitQuery = query.split("=");
-                    int subTaskId = Integer.parseInt(splitQuery[1]);
-
-                    for (SubTask subTask : subTaskList) {
+                    for (SubTask subTask : manager.getSubTaskList()) {
                         if (subTaskId == subTask.getId()) {
                             subTaskForReturn = manager.getSubTask(subTaskId);
                             statusCode = 200;
-
-                            response = gson.toJson(manager.getSubTask(subTaskId));
+                            response = gson.toJson(subTaskForReturn);
                         }
                     }
 
                     if (subTaskForReturn == null) {
                         statusCode = 400;
-
                         response = "Необходимо указать корректный id задачи, SubTask c " + subTaskId + " не существует";
                     }
 
                 } else {
                     statusCode = 200;
-
                     response = gson.toJson(manager.getSubTaskList());
                 }
             }
@@ -198,46 +179,40 @@ public class HTTPTaskServer {
                         statusCode = 201;
                         Task newTask = gson.fromJson(body, Task.class);
                         manager.createTask(newTask);
-
                         response = "Задача типа Task создана";
 
                     } else if (path.endsWith("tasks/epic")) {
                         statusCode = 201;
                         Epic newEpic = gson.fromJson(body, Epic.class);
                         manager.createEpic(newEpic);
-
                         response = "Задача типа Epic создана";
 
                     } else if (path.endsWith("tasks/subtask")) {
                         SubTask newSubTask = gson.fromJson(body, SubTask.class);
-
-                        List<Epic> epicList = manager.getEpicList();
-
                         Epic epicForSubTask = null;
 
-                        for (Epic epic : epicList) {
+                        for (Epic epic : manager.getEpicList()) {
                             if (epic.getId() == newSubTask.getEpicId()) {
-                                epicForSubTask = manager.getEpic(epic.getId());
+                                epicForSubTask = epic;
                                 statusCode = 201;
                                 manager.createSubTask(epic, newSubTask);
                                 manager.updateSubTask(newSubTask);
-
                                 response = "Задача типа SubTask создана";
                             }
                         }
+
                         if (epicForSubTask == null) {
                             statusCode = 400;
-
                             response = "Необходимо указать корректный id Epic в теле Subtask";
                         }
                     }
                 }
             }
+
             exchange.sendResponseHeaders(statusCode, response.getBytes(CHARSET).length);
             try (OutputStream outputStream = exchange.getResponseBody()) {
                 outputStream.write(response.getBytes(CHARSET));
             }
-
         }
 
         private void handlesDeleteProcessing(HttpExchange exchange) throws IOException {
@@ -253,108 +228,97 @@ public class HTTPTaskServer {
                 manager.removeAllTask();
                 manager.removeAllEpic();
                 manager.getPrioritizedTasks().clear();
-
                 response = "Все задачи удалены";
             }
 
             if (path.endsWith("tasks/task")) {
                 if (query != null) {
-                    List<Task> taskList = manager.getTaskList();
                     Task taskForRemove = null;
+                    int taskId = getIdFromQuery(query);
 
-                    String[] splitQuery = query.split("=");
-                    int taskId = Integer.parseInt(splitQuery[1]);
-
-                    for (Task task : taskList) {
+                    for (Task task : manager.getTaskList()) {
                         if (taskId == task.getId()) {
-                            taskForRemove = manager.getTask(taskId);
+                            taskForRemove = task;
                             statusCode = 200;
                             manager.removeTask(taskId);
-
                             response = "Задача типа TASK с ID " + taskId + " удалена";
                         }
                     }
 
                     if (taskForRemove == null) {
                         statusCode = 400;
-
                         response = "Необходимо указать корректный id задачи, task c " + taskId + " не существует";
                     }
+
                 } else {
                     statusCode = 200;
                     manager.removeAllTask();
-
                     response = "удалены все задачи типа TASK";
                 }
             }
 
             if (path.endsWith("tasks/epic")) {
                 if (query != null) {
-                    List<Epic> epicList = manager.getEpicList();
                     Epic epicForRemove = null;
+                    int epicId = getIdFromQuery(query);
 
-                    String[] splitQuery = query.split("=");
-                    int epicId = Integer.parseInt(splitQuery[1]);
-
-                    for (Epic epic : epicList) {
+                    for (Epic epic : manager.getEpicList()) {
                         if (epicId == epic.getId()) {
-                            epicForRemove = manager.getEpic(epicId);
+                            epicForRemove = epic;
                             statusCode = 200;
-
-                            manager.getAllSubTaskOfEpic(epic).clear();
+                            manager.getAllSubTaskOfEpic(epicForRemove).clear();
                             manager.removeEpic(epicId);
-
                             response = "Задача типа EPIC с ID " + epicId + " удалена";
                         }
                     }
 
                     if (epicForRemove == null) {
                         statusCode = 400;
-
                         response = "Необходимо указать корректный id задачи, epic c " + epicId + " не существует";
                     }
+
                 } else {
                     statusCode = 200;
                     manager.removeAllEpic();
-
                     response = "удалены все задачи типа EPIC";
                 }
             }
 
             if (path.endsWith("tasks/subtask")) {
                 if (query != null) {
-                    List<SubTask> subTaskList = manager.getSubTaskList();
                     SubTask subTaskForRemove = null;
+                    int subTaskId = getIdFromQuery(query);
 
-                    String[] splitQuery = query.split("=");
-                    int subTaskId = Integer.parseInt(splitQuery[1]);
-
-                    for (SubTask subTask : subTaskList) {
+                    for (SubTask subTask : manager.getSubTaskList()) {
                         if (subTaskId == subTask.getId()) {
-                            subTaskForRemove = manager.getSubTask(subTaskId);
+                            subTaskForRemove = subTask;
                             statusCode = 200;
                             manager.removeSubTask(subTaskId);
-
                             response = "Задача типа SubTask с ID " + subTaskId + " удалена";
                         }
                     }
 
                     if (subTaskForRemove == null) {
                         statusCode = 400;
-
                         response = "Необходимо указать корректный id задачи, SubTask c " + subTaskId + " не существует";
                     }
+
                 } else {
                     statusCode = 200;
                     manager.removeAllSubTask();
-
                     response = "удалены все задачи типа SUBTASK";
                 }
             }
+
             exchange.sendResponseHeaders(statusCode, response.getBytes(CHARSET).length);
             try (OutputStream outputStream = exchange.getResponseBody()) {
                 outputStream.write(response.getBytes(CHARSET));
             }
+        }
+
+        private int getIdFromQuery(String query) {
+            String[] splitQuery = query.split("=");
+            return Integer.parseInt(splitQuery[1]);
         }
     }
 }
