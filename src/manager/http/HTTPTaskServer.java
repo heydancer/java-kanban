@@ -46,7 +46,6 @@ public class HTTPTaskServer {
         server.stop(1);
     }
 
-
     class TasksHandler implements HttpHandler {
 
         @Override
@@ -325,7 +324,6 @@ public class HTTPTaskServer {
             String[] splitQuery = query.split("=");
             return Integer.parseInt(splitQuery[1]);
         }
-
     }
 }
 

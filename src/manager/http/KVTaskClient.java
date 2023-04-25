@@ -33,7 +33,6 @@ public class KVTaskClient {
         } catch (NullPointerException | IOException | InterruptedException e) {
             System.out.println("Ошибка при регистрации");
         }
-
     }
 
     public void put(String key, String json) {

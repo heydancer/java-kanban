@@ -2,10 +2,11 @@ package manager.history;
 
 import common.Task;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class InMemoryHistoryManager implements HistoryManager {
-
     private final HashMap<Integer, Node> nodeMap = new HashMap<>();
     private final CustomLinkedList historyList = new CustomLinkedList();
 

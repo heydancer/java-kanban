@@ -6,11 +6,12 @@ import manager.task.TaskManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static constant.Status.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static constant.Status.DONE;
+import static constant.Status.IN_PROGRESS;
+import static constant.Status.NEW;
+import static org.junit.jupiter.api.Assertions.;
 
 class EpicTest {
-
     private static TaskManager manager;
 
     @BeforeEach

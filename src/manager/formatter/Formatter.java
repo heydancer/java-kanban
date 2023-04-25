@@ -13,15 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Formatter {
-
     public static String historyToString(HistoryManager manager) {
         StringBuilder historyIds = new StringBuilder();
 
         if (manager.getHistory().isEmpty()) {
             return historyIds.append("0").toString();
-
         } else
-
             for (Task task : manager.getHistory()) {
                 historyIds.append(task.getId()).append(',');
             }
@@ -41,7 +38,6 @@ public class Formatter {
     }
 
     public static String toString(Task task) {
-
         String id = String.valueOf(task.getId());
         String type;
         String name = task.getName();
@@ -59,11 +55,11 @@ public class Formatter {
             if (task.getStartTime() != null && task.getEndTime() != null) {
                 startTime = task.getStartTime().toString();
                 endTime = task.getEndTime().toString();
-
             } else {
                 startTime = "null";
                 endTime = "null";
             }
+
         } else if (task instanceof SubTask) {
             type = TaskType.SUBTASK.name();
             epic = String.valueOf(((SubTask) task).getEpicId());
@@ -71,11 +67,11 @@ public class Formatter {
             if (task.getStartTime() != null && task.getEndTime() != null) {
                 startTime = task.getStartTime().toString();
                 endTime = task.getEndTime().toString();
-
             } else {
                 startTime = "null";
                 endTime = "null";
             }
+
         } else {
             type = TaskType.TASK.name();
             epic = "";
@@ -83,15 +79,14 @@ public class Formatter {
             if (task.getStartTime() != null && task.getEndTime() != null) {
                 startTime = task.getStartTime().toString();
                 endTime = task.getEndTime().toString();
-
             } else {
                 startTime = "null";
                 endTime = "null";
             }
         }
 
-        return String.join(",", id, type, name, status, description, epic, duration, startTime, endTime) + System.lineSeparator();
-
+        return String.join(",", id, type, name, status, description, epic, duration, startTime, endTime)
+                + System.lineSeparator();
     }
 
     public static Task fromString(String value) {
@@ -113,7 +108,6 @@ public class Formatter {
             taskStartTime = LocalDateTime.parse(taskArray[7]);
             taskEndTime = LocalDateTime.parse(taskArray[8]);
         }
-
 
         switch (taskType) {
             case TASK:

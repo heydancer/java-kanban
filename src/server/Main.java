@@ -2,9 +2,7 @@ package server;
 
 import manager.http.HTTPTaskServer;
 
-
 import java.io.IOException;
-
 
 public class Main {
 

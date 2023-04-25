@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class HTTPTaskManager extends FileBackedTasksManager {
-
     private final KVTaskClient kvTaskClient;
     private final Gson gson = new Gson();
 

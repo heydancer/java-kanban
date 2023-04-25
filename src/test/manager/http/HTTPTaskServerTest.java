@@ -25,7 +25,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class HTTPTaskServerTest {
-
     private KVServer kvServer;
     private HTTPTaskServer httpTaskServer;
 
